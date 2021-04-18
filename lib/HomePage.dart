@@ -14,9 +14,7 @@ class _HomePageState extends State<HomePage> {
   String stat = "";
   int i = 0;
   BluetoothDevice device;
-
   CheckModes _chk = CheckModes.eco;
-
   @override
   Widget build(BuildContext context) {
     FlutterBlue flutterBlue = FlutterBlue.instance;
@@ -61,6 +59,11 @@ class _HomePageState extends State<HomePage> {
         );
       }
       if (state == BluetoothState.on) {
+        int j = 0;
+        // while (j < 1) {
+        //   AppSettings.openBluetoothSettings();
+        //   j++;
+        // }
         if (i != 0) {
           i = 0;
           Navigator.of(context).pop();
@@ -84,52 +87,41 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
-                  return showDialog<void>(
+                  showDialog<void>(
                     context: context,
-                    barrierDismissible: false, // user must tap button!
                     builder: (BuildContext context) {
+                      int selectedRadio = 0;
                       return AlertDialog(
-                        title: Text('Angle Check Alert',
-                            style: TextStyle(
-                              fontSize: 15.0,
-                              fontWeight: FontWeight.bold,
-                            )),
+                        title: Text('Select Your Mode'),
                         content: StatefulBuilder(
                           builder:
                               (BuildContext context, StateSetter setState) {
                             return Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
-                                ListBody(
-                                  children: <Widget>[
-                                    Text('Select Your Mode',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 20.0,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 2.0,
-                                        )),
-                                    RadioListTile<CheckModes>(
-                                      title: Text("Eco"),
-                                      value: CheckModes.eco,
-                                      groupValue: _chk,
-                                      onChanged: (CheckModes value) {
-                                        setState(() {
-                                          _chk = value;
-                                        });
-                                      },
-                                    ),
-                                    RadioListTile<CheckModes>(
-                                      title: Text("Sports"),
-                                      value: CheckModes.sports,
-                                      groupValue: _chk,
-                                      onChanged: (CheckModes value) {
-                                        setState(() {
-                                          _chk = value;
-                                        });
-                                      },
-                                    ),
-                                  ],
+                                ListTile(
+                                  title: Text('Eco'),
+                                  leading: Radio(
+                                    value: CheckModes.eco,
+                                    groupValue: _chk,
+                                    onChanged: (CheckModes value) {
+                                      setState(() {
+                                        _chk = value;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                ListTile(
+                                  title: Text('Sports'),
+                                  leading: Radio(
+                                    value: CheckModes.sports,
+                                    groupValue: _chk,
+                                    onChanged: (CheckModes value) {
+                                      setState(() {
+                                        _chk = value;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ],
                             );
@@ -137,9 +129,12 @@ class _HomePageState extends State<HomePage> {
                         ),
                         actions: <Widget>[
                           TextButton(
-                            child: Text('SET'),
+                            child: Text('Set'),
                             onPressed: () {
-                              Navigator.pushReplacementNamed(context, '/btn');
+                              Navigator.of(context).pop();
+                              setState(() {
+                                _HomePageState();
+                              });
                             },
                           ),
                         ],
