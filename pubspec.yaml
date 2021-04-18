@@ -22,11 +22,13 @@ environment:
 
 dependencies:
   bluetooth_enable: ^0.1.1
+  flutter_spinkit: "^4.1.2"
   flutter_blue: ^0.7.0
   toast : ^0.1.5
   system_settings: 2.0.0
   app_settings: ^4.1.0
   fluttertoast:
+  open_settings: ^2.0.1
   android_intent: ^2.0.0
   flutter:
     sdk: flutter

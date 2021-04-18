@@ -23,7 +23,7 @@ class _MainAppState extends State<MainApp> {
   }
 
   void wait() async {
-    await Future.delayed(const Duration(seconds: 1), () {});
+    await Future.delayed(const Duration(seconds: 16), () {});
     Navigator.pushReplacementNamed(context, '/home');
   }
 
