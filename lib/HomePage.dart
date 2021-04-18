@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue/flutter_blue.dart';
 import 'package:app_settings/app_settings.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:toast/toast.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -132,6 +134,17 @@ class _HomePageState extends State<HomePage> {
                             child: Text('Set'),
                             onPressed: () {
                               Navigator.of(context).pop();
+                              if (_chk == CheckModes.sports) {
+                                Fluttertoast.showToast(
+                                  msg: "Alert is Disabled",
+                                  backgroundColor: Colors.grey,
+                                );
+                              } else {
+                                Fluttertoast.showToast(
+                                  msg: "Alert is Enabled",
+                                  backgroundColor: Colors.grey,
+                                );
+                              }
                               setState(() {
                                 _HomePageState();
                               });
