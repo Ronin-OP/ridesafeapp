@@ -1,14 +1,21 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue/flutter_blue.dart';
-import 'package:app_settings/app_settings.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:open_settings/open_settings.dart';
+import 'package:vibration/vibration.dart';
 
 class HomePage extends StatefulWidget {
+  final BluetoothDevice server;
+
+  const HomePage({this.server});
+
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() => new _HomePageState();
 }
 
 int temp = 0;
@@ -17,110 +24,94 @@ String align = "";
 SpinKitRing cir;
 SpinKitFadingCube facu;
 SpinKitFoldingCube focu;
+
 enum CheckModes { eco, sports }
 
+int opt;
+
+List a;
+var f1, f2;
+//String tag = "";
+String btStatus = "ON";
+int i = 0;
+int count = 0;
+BluetoothDevice device;
+CheckModes _chk;
+String conStatus = "Not Connected";
+
+class _Message {
+  int whom;
+  String text;
+  _Message(this.whom, this.text);
+}
+
+String t = "";
+
 class _HomePageState extends State<HomePage> {
-  String stat = "";
-  int i = 0;
-  BluetoothDevice device;
-  CheckModes _chk = CheckModes.eco;
+  static final clientID = 0;
+  BluetoothConnection connection;
+  List<_Message> messages = List<_Message>();
+  String _messageBuffer = '';
+  bool isConnecting = true;
+  bool get isConnected => connection != null && connection.isConnected;
+  bool isDisconnecting = false;
+
+  @override
+  void initState() {
+    BluetoothConnection.toAddress(widget.server.address).then((_connection) {
+      print('Connected to the device');
+      connection = _connection;
+      setState(() {
+        isConnecting = false;
+        isDisconnecting = false;
+      });
+      connection.input.listen(_onDataReceived).onDone(() {
+        if (isDisconnecting) {
+          print('Disconnecting locally!');
+        } else {
+          print('Disconnected remotely!');
+        }
+        if (this.mounted) {
+          setState(() {});
+        }
+      });
+    }).catchError((error) {
+      print('Cannot connect, exception occured');
+      print(error);
+    });
+    print('loling');
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    if (isConnected) {
+      isDisconnecting = true;
+      connection.dispose();
+      connection = null;
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    FlutterBlue.instance.state.listen((state) {
-      if (state == BluetoothState.off) {
-        stat = "Disabled";
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false, // user must tap button!
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Bluetooth Connection Error'),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children: <Widget>[
-                    Text('Bluetooth should be Enabled for running the App'),
-                    Text('Do you want to Enable Bluetooth ?'),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text('Yes'),
-                  onPressed: () {
-                    i++;
-                    OpenSettings.openBluetoothSetting();
-                    //AppSettings.openBluetoothSettings();
-                    Navigator.of(context).pop();
-                    setState(() {
-                      _HomePageState();
-                    });
-                  },
-                ),
-                TextButton(
-                  child: Text('Exit'),
-                  onPressed: () {
-                    //exit(0);
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      }
-      if (state == BluetoothState.on) {
-        if (i != 0) {
-          i = 0;
-          Navigator.of(context).pop();
-        }
-        setState(() {
-          stat = "Enabled";
-        });
-        FlutterBlue.instance.scan().listen((scanResult) async {
-          if (scanResult.device.name != "HC-05") {
-            showDialog<void>(
-              context: context,
-              barrierDismissible: false, // user must tap button!
-              builder: (BuildContext context) {
-                return AlertDialog(
-                  title: Text(
-                    'Invalid Bluetooth Device',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 25.0,
-                    ),
-                  ),
-                  content: SingleChildScrollView(
-                    child: ListBody(
-                      children: <Widget>[
-                        Text(
-                          'Make Sure You Have Connected To HC-05 !',
-                        ),
-                      ],
-                    ),
-                  ),
-                  actions: <Widget>[
-                    TextButton(
-                      child: Text('OK'),
-                      onPressed: () {
-                        AppSettings.openBluetoothSettings();
-                        Navigator.of(context).pop();
-                        setState(() {
-                          _HomePageState();
-                        });
-                      },
-                    ),
-                    TextButton(
-                      child: Text('Cancel'),
-                      onPressed: () {},
-                    ),
-                  ],
-                );
-              },
-            );
+    if (isConnected == false) {
+      FlutterBluetoothSerial.instance.requestEnable();
+    }
+    if (_chk == CheckModes.eco && count == 1) {
+      if (count == 1) {
+        t.trim();
+        f1 = int.parse(t);
+      } else {
+        if (count != 1) {
+          t.trim();
+          f2 = int.parse(t);
+          if (f1 - f2 > 10 || f2 - f1 > 10) {
+            Vibration.vibrate(pattern: [500, 1000, 500, 2000]);
           }
-        });
+        }
       }
-    });
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text("Safe Ride!"),
@@ -131,10 +122,13 @@ class _HomePageState extends State<HomePage> {
           Column(
             children: <Widget>[
               SizedBox(height: 30.0),
-              Text('Connection Status: $stat'),
+              Text('Bluetooth Status: $btStatus'),
+              SizedBox(height: 40.0),
+              Text('Connection Statue : $conStatus'),
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
+                  _sendMessage("1");
                   showDialog<void>(
                     context: context,
                     builder: (BuildContext context) {
@@ -190,6 +184,9 @@ class _HomePageState extends State<HomePage> {
                                   backgroundColor: Colors.grey,
                                 );
                               }
+                              if (_chk == CheckModes.eco) {
+                                count++;
+                              }
                               setState(() {
                                 _HomePageState();
                               });
@@ -208,45 +205,14 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    barrierDismissible: false, // user must tap button!
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Battery Percentage'),
-                        content: SingleChildScrollView(
-                          child: ListBody(
-                            children: <Widget>[
-                              Text(
-                                '$perc %',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            child: Text('OK'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              setState(() {
-                                _HomePageState();
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  _sendMessage("2");
                   showDialog<void>(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) {
                         Future.delayed(Duration(seconds: 10), () {
                           Navigator.of(context).pop(true);
+                          fun2(2);
                         });
                         return AlertDialog(
                           title: Text(''),
@@ -275,45 +241,14 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    barrierDismissible: false, // user must tap button!
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Check Wheel Alignment'),
-                        content: SingleChildScrollView(
-                          child: ListBody(
-                            children: <Widget>[
-                              Text(
-                                '$align',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            child: Text('OK'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              setState(() {
-                                _HomePageState();
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  _sendMessage("3");
                   showDialog<void>(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) {
                         Future.delayed(Duration(seconds: 10), () {
                           Navigator.of(context).pop(true);
+                          fun2(3);
                         });
                         return AlertDialog(
                           title: Text(''),
@@ -342,45 +277,14 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    barrierDismissible: false, // user must tap button!
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Engine Temperature'),
-                        content: SingleChildScrollView(
-                          child: ListBody(
-                            children: <Widget>[
-                              Text(
-                                '$temp Celsius',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 25.0,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: <Widget>[
-                          TextButton(
-                            child: Text('OK'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              setState(() {
-                                _HomePageState();
-                              });
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  );
+                  _sendMessage("4");
                   showDialog<void>(
                       context: context,
                       barrierDismissible: false,
                       builder: (context) {
                         Future.delayed(Duration(seconds: 10), () {
                           Navigator.of(context).pop(true);
+                          fun2(4);
                         });
                         return AlertDialog(
                           title: Text(''),
@@ -406,10 +310,145 @@ class _HomePageState extends State<HomePage> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              SizedBox(height: 40.0),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  void _onDataReceived(Uint8List data) {
+    // Allocate buffer for parsed data
+    int backspacesCounter = 0;
+    data.forEach((byte) {
+      if (byte == 8 || byte == 127) {
+        backspacesCounter++;
+      }
+    });
+    Uint8List buffer = Uint8List(data.length - backspacesCounter);
+    int bufferIndex = buffer.length;
+
+    // Apply backspace control character
+    backspacesCounter = 0;
+    for (int i = data.length - 1; i >= 0; i--) {
+      if (data[i] == 8 || data[i] == 127) {
+        backspacesCounter++;
+      } else {
+        if (backspacesCounter > 0) {
+          backspacesCounter--;
+        } else {
+          buffer[--bufferIndex] = data[i];
+        }
+      }
+      print('Uint8List $data');
+      a = data;
+    }
+
+    // Create message if there is new line character
+    String dataString = String.fromCharCodes(buffer);
+    int index = buffer.indexOf(13);
+    if (~index != 0) {
+      setState(() {
+        messages.add(
+          _Message(
+            1,
+            backspacesCounter > 0
+                ? _messageBuffer.substring(
+                    0, _messageBuffer.length - backspacesCounter)
+                : _messageBuffer + dataString.substring(0, index),
+          ),
+        );
+        _messageBuffer = dataString.substring(index);
+      });
+    } else {
+      _messageBuffer = (backspacesCounter > 0
+          ? _messageBuffer.substring(
+              0, _messageBuffer.length - backspacesCounter)
+          : _messageBuffer + dataString);
+    }
+    print('String $dataString');
+    t = t + dataString;
+    t.trim();
+  }
+
+  void _sendMessage(String text) async {
+    text = text.trim();
+    if (text.length > 0) {
+      try {
+        connection.output.add(utf8.encode(text + "\r\n"));
+        await connection.output.allSent;
+
+        setState(() {
+          messages.add(_Message(clientID, text));
+        });
+
+        Future.delayed(Duration(milliseconds: 333)).then((_) {});
+      } catch (e) {
+        setState(() {});
+      }
+    }
+  }
+
+  Widget fun2(int no) {
+    String join = "";
+    String heading = "";
+    if (no == 2) {
+      heading = "Battery Percentage";
+      join = "%";
+    } else if (no == 3) {
+      heading = "Wheel Alignment";
+      join = "";
+    } else if (no == 4) {
+      heading = "Engine Temperature";
+      join = "Celsius";
+    }
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('$heading'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                  '$t',
+                  style: TextStyle(
+                    // fontWeight: FontWeight.bold,
+                    fontSize: 25.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                t = "";
+                Navigator.of(context).pop();
+                setState(() {
+                  _HomePageState();
+                });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void fun1() {
+    sleep(Duration(seconds: 10));
+  }
+}
+
+class MyBackgroundScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Text('This is my background screen!'),
     );
   }
 }

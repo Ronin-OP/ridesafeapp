@@ -1,61 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:ridesafe_app/HomePage.dart';
+import 'btConnect.dart';
 
-class BottomAppBarDemo extends StatefulWidget {
-  const BottomAppBarDemo();
-
-  @override
-  State createState() => _BottomAppBarDemoState();
-}
-
-class _BottomAppBarDemoState extends State<BottomAppBarDemo> {
-  var chk;
-  void chkChange(FloatingActionButtonLocation value) {
-    setState(() {
-      chk = value;
-    });
-  }
-
+class BtnClick extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Safe Ride!"),
+    return MaterialApp(
+      title: 'Ride Safe',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      body: ListView(
-        children: [
-          SizedBox(
-            height: 90,
-          ),
-          Text("Select Your Mode",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 25.0,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
-                color: Colors.grey[600],
-              )),
-          SizedBox(
-            height: 30,
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              RadioListTile<FloatingActionButtonLocation>(
-                title: Text("Eco"),
-                value: FloatingActionButtonLocation.endDocked,
-                groupValue: chk,
-                onChanged: chkChange,
+      home: FutureBuilder(
+        future: FlutterBluetoothSerial.instance.requestEnable(),
+        builder: (context, future) {
+          if (future.connectionState == ConnectionState.waiting) {
+            return Scaffold(
+              body: Container(
+                height: double.infinity,
+                child: Center(
+                  child: Icon(
+                    Icons.bluetooth_disabled,
+                    size: 200.0,
+                    color: Colors.blue,
+                  ),
+                ),
               ),
-              RadioListTile<FloatingActionButtonLocation>(
-                title: Text("Sports"),
-                value: FloatingActionButtonLocation.centerDocked,
-                groupValue: chk,
-                onChanged: chkChange,
-              ),
-            ],
-          ),
-        ],
+            );
+          } else if (future.connectionState == ConnectionState.done) {
+            return Home();
+          } else {
+            return Home();
+          }
+        },
+        // child: MyHomePage(title: 'Flutter Demo Home Page'),
       ),
     );
+  }
+}
+
+class Home extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+        child: Scaffold(
+      appBar: AppBar(
+        title: Text('Paired Devices'),
+      ),
+      body: SelectBondedDevicePage(
+        onCahtPage: (device1) {
+          BluetoothDevice device = device1;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return HomePage(server: device);
+              },
+            ),
+          );
+        },
+      ),
+    ));
   }
 }

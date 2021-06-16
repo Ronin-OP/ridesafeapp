@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:ridesafe_app/BtnClick.dart';
+
 import 'HomePage.dart';
 
 void main() => runApp(MaterialApp(initialRoute: '/', routes: {
       '/': (context) => MainApp(),
-      '/home': (context) => HomePage(),
-      '/btn': (context) => BottomAppBarDemo(),
+      '/btConnect': (context) => BtnClick(),
+      '/home': (context) => HomePage()
     }));
 
 class MainApp extends StatefulWidget {
@@ -23,8 +24,8 @@ class _MainAppState extends State<MainApp> {
   }
 
   void wait() async {
-    await Future.delayed(const Duration(seconds: 16), () {});
-    Navigator.pushReplacementNamed(context, '/home');
+    await Future.delayed(const Duration(seconds: 1), () {});
+    Navigator.pushReplacementNamed(context, '/btConnect');
   }
 
   @override
