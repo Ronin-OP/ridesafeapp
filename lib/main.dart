@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:ridesafe_app/BtnClick.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'HomePage.dart';
+import 'LocalData.dart';
+
+SharedPreferences prefs;
 
 void main() => runApp(MaterialApp(initialRoute: '/', routes: {
       '/': (context) => MainApp(),
       '/btConnect': (context) => BtnClick(),
-      '/home': (context) => HomePage()
+      '/home': (context) => HomePage(),
+      '/local': (context) => LocalData()
     }));
 
 class MainApp extends StatefulWidget {
-  // This widget is the root of your application.
   @override
   _MainAppState createState() => _MainAppState();
 }
@@ -24,8 +27,14 @@ class _MainAppState extends State<MainApp> {
   }
 
   void wait() async {
-    await Future.delayed(const Duration(seconds: 1), () {});
-    Navigator.pushReplacementNamed(context, '/btConnect');
+    prefs = await SharedPreferences.getInstance();
+    String a = prefs.getString('bname') ?? null;
+    int b = prefs.getInt('cc') ?? null;
+    if (a != null && b != null) {
+      Navigator.pushReplacementNamed(context, '/btConnect');
+    } else {
+      Navigator.pushReplacementNamed(context, '/local');
+    }
   }
 
   @override

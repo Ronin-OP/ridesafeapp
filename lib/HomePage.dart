@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:ridesafe_app/LocalData.dart';
 import 'package:vibration/vibration.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,6 +26,8 @@ String align = "";
 SpinKitRing cir;
 SpinKitFadingCube facu;
 SpinKitFoldingCube focu;
+String bname;
+String bcc;
 
 enum CheckModes { eco, sports }
 
@@ -76,10 +80,9 @@ class _HomePageState extends State<HomePage> {
         }
       });
     }).catchError((error) {
-      print('Cannot connect, exception occured');
+      print('Cannot connect, Exception Occured');
       print(error);
     });
-    print('loling');
     super.initState();
   }
 
@@ -114,7 +117,7 @@ class _HomePageState extends State<HomePage> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text("Safe Ride!"),
+        title: Center(child: Text("Safe Ride!")),
       ),
       body: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -124,7 +127,7 @@ class _HomePageState extends State<HomePage> {
               SizedBox(height: 30.0),
               Text('Bluetooth Status: $btStatus'),
               SizedBox(height: 40.0),
-              Text('Connection Statue : $conStatus'),
+              Text('Connection Status : $conStatus'),
               SizedBox(height: 40.0),
               ElevatedButton(
                 onPressed: () {
@@ -311,6 +314,39 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SizedBox(height: 40.0),
+              ElevatedButton(
+                  onPressed: () {
+                    _read();
+                    showDialog<void>(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) {
+                          Future.delayed(Duration(seconds: 10), () {
+                            Navigator.of(context).pop(true);
+                            Navigator.of(context).push(new MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                    DataShown()));
+                          });
+                          return AlertDialog(
+                            title: Text(''),
+                            content: SingleChildScrollView(
+                              child: Row(
+                                children: [
+                                  cir = SpinKitRing(
+                                    color: Colors.grey,
+                                    size: 50.0,
+                                  ),
+                                  Text('    Checking'),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              Text(''),
+                            ],
+                          );
+                        });
+                  },
+                  child: Text(' Local DAta Cache')),
             ],
           ),
         ],
@@ -328,8 +364,6 @@ class _HomePageState extends State<HomePage> {
     });
     Uint8List buffer = Uint8List(data.length - backspacesCounter);
     int bufferIndex = buffer.length;
-
-    // Apply backspace control character
     backspacesCounter = 0;
     for (int i = data.length - 1; i >= 0; i--) {
       if (data[i] == 8 || data[i] == 127) {
@@ -449,6 +483,29 @@ class MyBackgroundScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Text('This is my background screen!'),
+    );
+  }
+}
+
+_read() async {
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final file1 = File('${directory.path}/my_bname.txt');
+    bname = await file1.readAsString();
+    final file2 = File('${directory.path}/my_bCC.txt');
+    bcc = await file2.readAsString();
+  } catch (e) {
+    print("Couldn't read file");
+  }
+}
+
+class DataShown extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      child: Container(
+        child: Text('\n\n\n\n CC : $bcc \n BNAME: $bname'),
+      ),
     );
   }
 }
