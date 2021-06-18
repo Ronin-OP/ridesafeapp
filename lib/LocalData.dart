@@ -6,8 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:ridesafe_app/BtnClick.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-int cc;
-String bname;
+int cc = null;
+String bname = null;
 SharedPreferences prefs;
 
 class LocalData extends StatefulWidget {
@@ -45,6 +45,10 @@ class _LocalDataState extends State<LocalData> {
       child: Container(
         child: Column(
           children: [
+            SizedBox(height: 10),
+            Container(
+              child: Image.asset('assets/logo.jpg'),
+            ),
             SizedBox(
               height: 20,
             ),
@@ -76,16 +80,29 @@ class _LocalDataState extends State<LocalData> {
             ),
             ElevatedButton(
                 onPressed: () {
-                  _save();
-                  setData();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) {
-                        return BtnClick();
-                      },
-                    ),
-                  );
+                  if (cc != null && bname != null) {
+                    _save();
+                    setData();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return BtnClick();
+                        },
+                      ),
+                    );
+                  } else {
+                    cc = null;
+                    bname = null;
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return LocalData();
+                        },
+                      ),
+                    );
+                  }
                 },
                 child: Text('Get.Set.Go'))
           ],
