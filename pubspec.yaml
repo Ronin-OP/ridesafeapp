@@ -36,7 +36,6 @@ dependencies:
   open_settings: ^2.0.1
   android_intent: ^2.0.0
   pip_view: ^0.9.5
-  shared_preferences: 2.0.6
   path_provider: ^0.4.1
   flutter:
     sdk: flutter

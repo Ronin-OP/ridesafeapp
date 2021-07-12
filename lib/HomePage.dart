@@ -8,12 +8,10 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:ridesafe_app/LocalData.dart';
 import 'package:vibration/vibration.dart';
 
 class HomePage extends StatefulWidget {
   final BluetoothDevice server;
-
   const HomePage({this.server});
 
   @override
@@ -28,6 +26,7 @@ SpinKitFadingCube facu;
 SpinKitFoldingCube focu;
 String bname;
 String bcc;
+List<String> r;
 
 enum CheckModes { eco, sports }
 
@@ -35,7 +34,6 @@ int opt;
 
 List a;
 var f1, f2;
-//String tag = "";
 String btStatus = "ON";
 int i = 0;
 int count = 0;
@@ -323,9 +321,10 @@ class _HomePageState extends State<HomePage> {
                         builder: (context) {
                           Future.delayed(Duration(seconds: 10), () {
                             Navigator.of(context).pop(true);
-                            Navigator.of(context).push(new MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                    DataShown()));
+                            fun2(5);
+                            // Navigator.of(context).push(new MaterialPageRoute(
+                            //     builder: (BuildContext context) =>
+                            //         DataShown()));
                           });
                           return AlertDialog(
                             title: Text(''),
@@ -429,13 +428,13 @@ class _HomePageState extends State<HomePage> {
     String heading = "";
     if (no == 2) {
       heading = "Battery Percentage";
-      join = "%";
     } else if (no == 3) {
       heading = "Wheel Alignment";
-      join = "";
     } else if (no == 4) {
       heading = "Engine Temperature";
-      join = "Celsius";
+    } else if (no == 5) {
+      heading = "Data Cache";
+      join = "BName : " + r[0] + " CC : " + r[1];
     }
     showDialog<void>(
       context: context,
@@ -447,7 +446,7 @@ class _HomePageState extends State<HomePage> {
             child: ListBody(
               children: <Widget>[
                 Text(
-                  '$t',
+                  '$t $join',
                   style: TextStyle(
                     // fontWeight: FontWeight.bold,
                     fontSize: 25.0,
@@ -490,22 +489,10 @@ class MyBackgroundScreen extends StatelessWidget {
 _read() async {
   try {
     final directory = await getApplicationDocumentsDirectory();
-    final file1 = File('${directory.path}/my_bname.txt');
+    final file1 = File('${directory.path}/ridesafe_app.txt');
     bname = await file1.readAsString();
-    final file2 = File('${directory.path}/my_bCC.txt');
-    bcc = await file2.readAsString();
+    r = bname.split('::');
   } catch (e) {
     print("Couldn't read file");
-  }
-}
-
-class DataShown extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      child: Container(
-        child: Text('\n\n\n\n CC : $bcc \n BNAME: $bname'),
-      ),
-    );
   }
 }
